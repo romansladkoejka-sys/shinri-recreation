@@ -41,3 +41,8 @@ luac.out
 
 *.bak
 *backup*
+
+# Local backup files
+*.bak
+*backup*
+*.before_*
