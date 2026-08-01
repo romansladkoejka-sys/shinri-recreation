@@ -1,3 +1,0 @@
-﻿include("shared.lua")
-include("cl_chat.lua")
-include("cl_characters.lua")

@@ -1,5 +1,0 @@
-include("shared.lua")
-include("cl_chat.lua")
-include("cl_characters.lua")
-include("cl_escape_menu.lua")
-
