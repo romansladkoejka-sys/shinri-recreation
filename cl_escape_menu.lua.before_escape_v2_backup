@@ -1,0 +1,247 @@
+﻿local ShinriEscapeMenu
+
+local function CloseShinriEscapeMenu()
+    if IsValid(ShinriEscapeMenu) then
+        ShinriEscapeMenu:Remove()
+    end
+end
+
+local function OpenShinriEscapeMenu()
+
+    if IsValid(ShinriEscapeMenu) then
+        CloseShinriEscapeMenu()
+        return
+    end
+
+    ShinriEscapeMenu = vgui.Create("DFrame")
+    ShinriEscapeMenu:SetSize(ScrW(), ScrH())
+    ShinriEscapeMenu:SetPos(0, 0)
+    ShinriEscapeMenu:SetTitle("")
+    ShinriEscapeMenu:SetDraggable(false)
+    ShinriEscapeMenu:ShowCloseButton(false)
+    ShinriEscapeMenu:MakePopup()
+
+    ShinriEscapeMenu.Paint = function(self, w, h)
+
+        -- Затемнение игрового мира
+        surface.SetDrawColor(0, 0, 0, 135)
+        surface.DrawRect(0, 0, w, h)
+
+        -- Левая тёмно-красная панель
+        surface.SetDrawColor(35, 5, 7, 245)
+        surface.DrawRect(0, 0, w * 0.33, h)
+
+        -- Красная полупрозрачная зона
+        surface.SetDrawColor(100, 10, 15, 70)
+        surface.DrawRect(0, 0, w * 0.33, h)
+
+        -- Вертикальная линия
+        surface.SetDrawColor(180, 20, 25, 180)
+        surface.DrawRect(w * 0.33, 0, 2, h)
+
+        -- Логотип текстом
+        draw.SimpleText(
+            "SHINRI",
+            "Trebuchet24",
+            65,
+            60,
+            Color(255, 255, 255),
+            TEXT_ALIGN_LEFT
+        )
+
+        draw.SimpleText(
+            "TRIAL",
+            "Trebuchet24",
+            100,
+            90,
+            Color(255, 255, 255),
+            TEXT_ALIGN_LEFT
+        )
+
+        -- Красная декоративная линия логотипа
+        surface.SetDrawColor(220, 20, 30, 255)
+        surface.DrawRect(50, 125, 180, 4)
+
+        draw.SimpleText(
+            "SHINRI RECREATION",
+            "Trebuchet18",
+            50,
+            h - 45,
+            Color(160, 160, 160),
+            TEXT_ALIGN_LEFT
+        )
+
+    end
+
+    local menuItems = {
+        {
+            text = "Продолжить игру",
+            action = function()
+                CloseShinriEscapeMenu()
+            end
+        },
+
+        {
+            text = "Выбрать персонажа",
+            action = function()
+
+                CloseShinriEscapeMenu()
+
+                if ShinriOpenCharacterMenu then
+                    ShinriOpenCharacterMenu()
+                end
+
+            end
+        },
+
+        {
+            text = "Открыть Хаб",
+            action = function()
+                chat.AddText(
+                    Color(255, 200, 100),
+                    "[Shinri] ",
+                    Color(255, 255, 255),
+                    "Хаб пока находится в разработке."
+                )
+            end
+        },
+
+        {
+            text = "Настройки",
+            action = function()
+                CloseShinriEscapeMenu()
+                RunConsoleCommand("gamemenucommand", "openoptionsdialog")
+            end
+        },
+
+        {
+            text = "Меню Garry's Mod",
+            action = function()
+                CloseShinriEscapeMenu()
+                gui.ActivateGameUI()
+            end
+        },
+
+        {
+            text = "Выход из игры",
+            action = function()
+                CloseShinriEscapeMenu()
+                RunConsoleCommand("disconnect")
+            end
+        }
+    }
+
+    local startY = ScrH() * 0.30
+    local buttonHeight = 58
+    local buttonSpacing = 14
+
+    for i, item in ipairs(menuItems) do
+
+        local button = vgui.Create("DButton", ShinriEscapeMenu)
+
+        button:SetPos(
+            65,
+            startY + (i - 1) * (buttonHeight + buttonSpacing)
+        )
+
+        button:SetSize(
+            ScrW() * 0.26,
+            buttonHeight
+        )
+
+        button:SetText("")
+
+        button.Paint = function(self, w, h)
+
+            if self:IsHovered() then
+
+                surface.SetDrawColor(
+                    245,
+                    190,
+                    80,
+                    245
+                )
+
+                surface.DrawRect(
+                    0,
+                    0,
+                    w,
+                    h
+                )
+
+                draw.SimpleText(
+                    item.text,
+                    "Trebuchet24",
+                    40,
+                    h / 2,
+                    Color(20, 10, 10),
+                    TEXT_ALIGN_LEFT,
+                    TEXT_ALIGN_CENTER
+                )
+
+            else
+
+                -- Жёлтая вертикальная линия
+                surface.SetDrawColor(
+                    255,
+                    205,
+                    90,
+                    255
+                )
+
+                surface.DrawRect(
+                    0,
+                    5,
+                    4,
+                    h - 10
+                )
+
+                draw.SimpleText(
+                    item.text,
+                    "Trebuchet24",
+                    40,
+                    h / 2,
+                    Color(255, 255, 255),
+                    TEXT_ALIGN_LEFT,
+                    TEXT_ALIGN_CENTER
+                )
+
+            end
+
+        end
+
+        button.DoClick = item.action
+
+    end
+
+end
+
+
+-- Перехватываем ESC
+hook.Add(
+    "OnGameUIVisible",
+    "Shinri_CustomEscapeMenu",
+    function()
+
+        gui.HideGameUI()
+
+        if IsValid(ShinriEscapeMenu) then
+            CloseShinriEscapeMenu()
+        else
+            OpenShinriEscapeMenu()
+        end
+
+    end
+)
+
+
+-- Позволяем Character Menu открываться напрямую
+net.Receive(
+    "ShinriEscape_OpenCharacterMenu",
+    function()
+
+        CloseShinriEscapeMenu()
+
+    end
+)
+

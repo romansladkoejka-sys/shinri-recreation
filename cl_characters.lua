@@ -1,0 +1,425 @@
+﻿local CharacterMenu
+
+local Characters = {
+    {
+        id = "ibuki",
+        name = "ИБУКИ МИОДА",
+        description = "АБСОЛЮТНЫЙ МУЗЫКАНТ",
+        model = "models/player/dewobedil/danganronpa/ibuki_mioda/default_p.mdl"
+    },
+    {
+        id = "nagito",
+        name = "НАГИТО КОМАЭДА",
+        description = "АБСОЛЮТНЫЙ СЧАСТЛИВЧИК",
+        model = "models/dro/player/characters2/char2/nagito_suit.mdl"
+    },
+    {
+        id = "komaru",
+        name = "КОМАРУ НАЭГИ",
+        description = "ОБЫЧНАЯ УЧЕНИЦА",
+        model = "models/player/someguy/komaru_p.mdl"
+    },
+    {
+        id = "nagisa",
+        name = "НАГИСА ШИНГЕЦУ",
+        description = "МАЛЕНЬКИЙ АБСОЛЮТНЫЙ ОБЩЕСТВОВЕД",
+        model = "models/dro/player/characters4/nagisa_scots/nagisa_scots.mdl"
+    }
+}
+
+function ShinriOpenCharacterMenu()
+
+    if IsValid(CharacterMenu) then
+        CharacterMenu:Remove()
+    end
+
+    local selectedCharacter = Characters[1]
+
+    CharacterMenu = vgui.Create("DFrame")
+    CharacterMenu:SetSize(ScrW(), ScrH())
+    CharacterMenu:SetPos(0, 0)
+    CharacterMenu:SetTitle("")
+    CharacterMenu:SetDraggable(false)
+    CharacterMenu:ShowCloseButton(false)
+    CharacterMenu:MakePopup()
+
+    CharacterMenu.Paint = function(self, w, h)
+
+        -- Основной тёмно-красный фон
+        surface.SetDrawColor(18, 4, 6, 255)
+        surface.DrawRect(0, 0, w, h)
+
+        -- Красная центральная область
+        surface.SetDrawColor(80, 5, 8, 255)
+        surface.DrawRect(w * 0.31, 0, w * 0.36, h)
+
+        -- Левая панель
+        surface.SetDrawColor(15, 5, 7, 235)
+        surface.DrawRect(25, 45, w * 0.29, h - 90)
+
+        -- Правая панель
+        surface.SetDrawColor(10, 5, 7, 235)
+        surface.DrawRect(w * 0.67, 45, w * 0.31, h - 90)
+
+        -- Декоративные красные линии
+        surface.SetDrawColor(160, 20, 25, 180)
+        surface.DrawRect(w * 0.31, 0, 2, h)
+        surface.DrawRect(w * 0.67, 0, 2, h)
+
+        -- Имя
+        draw.SimpleText(
+            selectedCharacter.name,
+            "Trebuchet24",
+            52,
+            72,
+            Color(255, 255, 255),
+            TEXT_ALIGN_LEFT
+        )
+
+        -- Талант
+        draw.SimpleText(
+            selectedCharacter.description,
+            "Trebuchet18",
+            52,
+            108,
+            Color(255, 210, 100),
+            TEXT_ALIGN_LEFT
+        )
+
+        -- Разделительная линия
+        surface.SetDrawColor(150, 150, 150, 100)
+        surface.DrawRect(52, 140, w * 0.25, 1)
+
+        draw.SimpleText(
+            "ВЫБОР ПЕРСОНАЖА",
+            "Trebuchet24",
+            w * 0.695,
+            70,
+            Color(255, 255, 255),
+            TEXT_ALIGN_LEFT
+        )
+
+        surface.SetDrawColor(150, 150, 150, 100)
+        surface.DrawRect(w * 0.695, 105, w * 0.25, 1)
+
+        draw.SimpleText(
+            "SHINRI RECREATION",
+            "Trebuchet18",
+            52,
+            h - 65,
+            Color(170, 170, 170),
+            TEXT_ALIGN_LEFT
+        )
+    end
+
+    -- 3D модель по центру
+    local ModelPanel = vgui.Create("DModelPanel", CharacterMenu)
+    ModelPanel:SetPos(ScrW() * 0.31, 30)
+    ModelPanel:SetSize(ScrW() * 0.36, ScrH() - 60)
+    ModelPanel:SetModel(selectedCharacter.model)
+    ModelPanel:SetFOV(36)
+
+    local function SetupModel(character)
+
+        if not IsValid(ModelPanel) then return end
+
+        ModelPanel:SetModel(character.model)
+
+        local ent = ModelPanel:GetEntity()
+
+        if IsValid(ent) then
+
+            local mn, mx = ent:GetRenderBounds()
+            local size = 0
+
+            size = math.max(size, math.abs(mn.x) + math.abs(mx.x))
+            size = math.max(size, math.abs(mn.y) + math.abs(mx.y))
+            size = math.max(size, math.abs(mn.z) + math.abs(mx.z))
+
+            ModelPanel:SetFOV(36)
+
+            ModelPanel:SetCamPos(
+                Vector(
+                    size * 1.2,
+                    size * 0.35,
+                    size * 0.65
+                )
+            )
+
+            ModelPanel:SetLookAt(
+                Vector(
+                    0,
+                    0,
+                    (mn.z + mx.z) * 0.45
+                )
+            )
+
+            ent:SetAngles(Angle(0, 25, 0))
+        end
+    end
+
+    SetupModel(selectedCharacter)
+
+    ModelPanel.LayoutEntity = function(self, ent)
+
+        if self:IsHovered() and input.IsMouseDown(MOUSE_LEFT) then
+
+            local x = gui.MouseX()
+
+            self.LastMouseX = self.LastMouseX or x
+
+            local delta = x - self.LastMouseX
+
+            ent:SetAngles(
+                ent:GetAngles() +
+                Angle(0, delta * 0.5, 0)
+            )
+
+            self.LastMouseX = x
+
+        else
+            self.LastMouseX = nil
+        end
+
+    end
+
+    -- Правая сетка персонажей
+    local gridX = ScrW() * 0.695
+    local gridY = 135
+
+    local cardWidth = ScrW() * 0.125
+    local cardHeight = 90
+
+    for i, character in ipairs(Characters) do
+
+        local column = (i - 1) % 2
+        local row = math.floor((i - 1) / 2)
+
+        local button = vgui.Create("DButton", CharacterMenu)
+
+        button:SetPos(
+            gridX + column * (cardWidth + 12),
+            gridY + row * (cardHeight + 12)
+        )
+
+        button:SetSize(
+            cardWidth,
+            cardHeight
+        )
+
+        button:SetText("")
+
+        button.Paint = function(self, w, h)
+
+            local selected =
+                selectedCharacter.id == character.id
+
+            if selected then
+
+                surface.SetDrawColor(
+                    150,
+                    20,
+                    25,
+                    240
+                )
+
+            elseif self:IsHovered() then
+
+                surface.SetDrawColor(
+                    80,
+                    30,
+                    35,
+                    240
+                )
+
+            else
+
+                surface.SetDrawColor(
+                    35,
+                    18,
+                    22,
+                    230
+                )
+
+            end
+
+            surface.DrawRect(
+                0,
+                0,
+                w,
+                h
+            )
+
+            if selected then
+
+                surface.SetDrawColor(
+                    255,
+                    210,
+                    100,
+                    255
+                )
+
+                surface.DrawOutlinedRect(
+                    0,
+                    0,
+                    w,
+                    h,
+                    2
+                )
+
+            end
+
+            draw.SimpleText(
+                character.name,
+                "Trebuchet18",
+                w / 2,
+                h / 2 - 10,
+                Color(
+                    255,
+                    255,
+                    255
+                ),
+                TEXT_ALIGN_CENTER,
+                TEXT_ALIGN_CENTER
+            )
+
+            draw.SimpleText(
+                character.description,
+                "DermaDefault",
+                w / 2,
+                h / 2 + 15,
+                Color(
+                    190,
+                    190,
+                    190
+                ),
+                TEXT_ALIGN_CENTER,
+                TEXT_ALIGN_CENTER
+            )
+
+        end
+
+        button.DoClick = function()
+
+            selectedCharacter = character
+
+            SetupModel(character)
+
+        end
+
+    end
+
+    -- Кнопка подтверждения
+    local SelectButton =
+        vgui.Create(
+            "DButton",
+            CharacterMenu
+        )
+
+    SelectButton:SetPos(
+        ScrW() * 0.695,
+        ScrH() - 130
+    )
+
+    SelectButton:SetSize(
+        ScrW() * 0.25,
+        55
+    )
+
+    SelectButton:SetText("")
+
+    SelectButton.Paint =
+        function(self, w, h)
+
+        if self:IsHovered() then
+
+            surface.SetDrawColor(
+                170,
+                25,
+                30,
+                255
+            )
+
+        else
+
+            surface.SetDrawColor(
+                110,
+                15,
+                20,
+                255
+            )
+
+        end
+
+        surface.DrawRect(
+            0,
+            0,
+            w,
+            h
+        )
+
+        surface.SetDrawColor(
+            255,
+            220,
+            150,
+            255
+        )
+
+        surface.DrawOutlinedRect(
+            0,
+            0,
+            w,
+            h,
+            2
+        )
+
+        draw.SimpleText(
+            "ВЫБРАТЬ ПЕРСОНАЖА",
+            "Trebuchet24",
+            w / 2,
+            h / 2,
+            Color(
+                255,
+                255,
+                255
+            ),
+            TEXT_ALIGN_CENTER,
+            TEXT_ALIGN_CENTER
+        )
+
+    end
+
+    SelectButton.DoClick =
+        function()
+
+        if not selectedCharacter then return end
+
+        net.Start(
+            "ShinriCharacter_Select"
+        )
+
+        net.WriteString(
+            selectedCharacter.id
+        )
+
+        net.SendToServer()
+
+        CharacterMenu:Remove()
+
+        gui.EnableScreenClicker(
+            false
+        )
+
+    end
+
+end
+
+net.Receive(
+    "ShinriCharacter_Open",
+    function()
+
+        ShinriOpenCharacterMenu()
+
+    end
+)
+
